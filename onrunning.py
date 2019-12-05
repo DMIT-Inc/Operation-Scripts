@@ -7,10 +7,10 @@ def maindef():
     totalcpu, cpu_error = Out_CPUsTotal.communicate()
     cpus = ""
     tcpu = int(totalcpu)
-    if (tcpu > 1):
-        for c in range(1, tcpu):
-            cpus = cpus + "1"
-    cpus = cpus + "0"
+    if (tcpu > 2):
+        for c in range(1, tcpu / 2):
+            cpus = cpus + "01"
+    cpus = cpus + "00"
     pattern = re.compile('.{8}')
     f_cpus = ','.join(pattern.findall(format(int(cpus,2),'x')))
 
