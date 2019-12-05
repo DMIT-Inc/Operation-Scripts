@@ -17,7 +17,7 @@ def excu_optimization(nicname):
 
     os.system("bash /etc/set_irq_affinity.sh local " + nicname)
 
-    Out_CPUsLits = subprocess.Popen(["cat /sys/class/net/" + nicname + "/device/local_cpu"],stdout=subprocess.PIPE, shell=True)
+    Out_CPUsLits = subprocess.Popen(["cat /sys/class/net/" + nicname + "/device/local_cpus"],stdout=subprocess.PIPE, shell=True)
     cpulists, cpu_error = Out_CPUsLits.communicate()
 
     queueslist = traversalDir_FirstDir("/sys/class/net/" + nicname + "/queues/")
