@@ -50,10 +50,10 @@ def maindef():
                 queueslist = traversalDir_FirstDir("/sys/class/net/" + ifname + "/queues/")
                 for queue in queueslist:
                     if ("rx" in queue):
-                        os.system ("echo \"" + string.strip(nic_cpus[nicname]) + "\" > /sys/class/net/" + ifname + "/queues/" + queue + "/rps_cpus")
+                        os.system ("echo \"" + nic_cpus[nicname] + "\" > /sys/class/net/" + ifname + "/queues/" + queue + "/rps_cpus")
                         os.system ("echo 2048 > /sys/class/net/" + ifname + "/queues/" + queue + "/rps_flow_cnt")
                     if ("tx" in queue):
-                        os.system ("echo \"" + string.strip(nic_cpus[nicname]) + "\" > /sys/class/net/" + ifname + "/queues/" + queue + "/xps_cpus")
+                        os.system ("echo \"" + nic_cpus[nicname] + "\" > /sys/class/net/" + ifname + "/queues/" + queue + "/xps_cpus")
 
 def traversalDir_FirstDir(path):
     list = []
