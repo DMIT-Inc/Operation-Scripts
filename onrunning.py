@@ -25,7 +25,7 @@ def maindef():
                 if (not vmbr_list.has_key(nowbrint)):
                     vmbr_list[nowbrint] = [vmid]
                 else:
-                    vmbr_list[nowbrint] = vmbr_list[nowbrint].append(vmid)
+                    vmbr_list[nowbrint].append(vmid)
    
     Output_NICList = subprocess.Popen(["find /sys/class/net ! -type d | xargs --max-args=1 realpath | awk -F\/ '/pci/{print $NF}'", ],stdout=subprocess.PIPE, shell=True)
     nic_List, nic_error = Output_NICList.communicate()
