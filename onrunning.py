@@ -44,6 +44,7 @@ def maindef():
             for ifname in vmbr_list[nicname]:
                 if (vmid[0] in ifname):
                     vmbr_list[nicname].append(nic_not)
+                    break
 
     Output_NICList = subprocess.Popen(["find /sys/class/net ! -type d | xargs --max-args=1 realpath | awk -F\/ '/pci/{print $NF}'", ],stdout=subprocess.PIPE, shell=True)
     nic_List, nic_error = Output_NICList.communicate()
