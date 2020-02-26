@@ -1,11 +1,14 @@
 import subprocess
 import os
 import re
+from collections import defaultdict
+
 
 def maindef():
 
-    vmbr_list = {}
+    vmbr_list = defaultdict(list)
     nic_cpus = {}
+    not_config_list = []
 
     Out_vmbr_sum =  subprocess.Popen(["brctl show"],stdout=subprocess.PIPE, shell=True)
     vmbr_sum, vmbr_error = Out_vmbr_sum.communicate()
@@ -16,17 +19,32 @@ def maindef():
         line = re.split(r"\t+", vmbrl)
         if ("vmbr" in line[0]):
             nowbrint = line[3].split('.')[0]
+            vmbr_list[nowbrint].append(line[0])
+            if ("." in line[3]):
+                vmbr_list[nowbrint].append(line[3])
+        elif ("fwbr" in line[0]):
+            not_config_list.append(line[0])
+            not_config_list.append(line[3])
         else :
-            if ("fwbr" in line[0]):
-                nowbrint = ""
-            if (nowbrint != "" and len(line) > 1):
-                vmid = re.split(r"fwpr", line[1])[1]
-                vmid = re.split(r"p0", vmid)[0]
-                if (not vmbr_list.has_key(nowbrint)):
-                    vmbr_list[nowbrint] = [vmid]
-                else:
-                    vmbr_list[nowbrint].append(vmid)
-   
+            if (len(line) < 2 or nowbrint == ""):
+                continue
+            if ("fwbr" in nowbrint):
+                not_config_list.append(line[1])
+            if (("tap" in line[1]) or ("fwln" in line[1]) or ("fwpr" in line[1])):
+                vmbr_list[nowbrint].append(line[1])
+
+    for nic_not in not_config_list:
+        vmid = re.split(r"fwbr", nic_not)
+        if ((vmid is None) or len(vmid) < 1):
+            continue
+        vmid = re.split(r"i0", vmid[0])
+        if ((vmid is None) or len(vmid) < 1):
+            continue
+        for nicname in vmbr_list:
+            for ifname in vmbr_list[nicname]:
+                if (vmid[0] in ifname):
+                    vmbr_list[nicname].append(nic_not)
+
     Output_NICList = subprocess.Popen(["find /sys/class/net ! -type d | xargs --max-args=1 realpath | awk -F\/ '/pci/{print $NF}'", ],stdout=subprocess.PIPE, shell=True)
     nic_List, nic_error = Output_NICList.communicate()
     for nic in nic_List.split(os.linesep):
@@ -41,19 +59,16 @@ def maindef():
                 cpulists, cpu_error = Out_CPUsLits.communicate()
                 nic_cpus[nicName] = str.strip(cpulists)
                     
-    nictype = ["tap", "fwbr", "fwln", "fwpr"]
-    nictype_sub = ["fwpr"]
     for nicname in vmbr_list:
-        for vmid in vmbr_list[nicname]:
-            for nt in nictype:
-                ifname = nt + vmid + ("p0" if nt in nictype_sub else "i0")
-                queueslist = traversalDir_FirstDir("/sys/class/net/" + ifname + "/queues/")
-                for queue in queueslist:
-                    if ("rx" in queue):
-                        os.system ("echo \"" + nic_cpus[nicname] + "\" > /sys/class/net/" + ifname + "/queues/" + queue + "/rps_cpus")
-                        os.system ("echo 2048 > /sys/class/net/" + ifname + "/queues/" + queue + "/rps_flow_cnt")
-                    if ("tx" in queue):
-                        os.system ("echo \"" + nic_cpus[nicname] + "\" > /sys/class/net/" + ifname + "/queues/" + queue + "/xps_cpus")
+        for ifname in vmbr_list[nicname]:
+            queueslist = traversalDir_FirstDir("/sys/class/net/" + ifname + "/queues/")
+            for queue in queueslist:
+                if ("rx" in queue):
+                    os.system ("echo \"" + nic_cpus[nicname] + "\" > /sys/class/net/" + ifname + "/queues/" + queue + "/rps_cpus")
+                    os.system ("echo 2048 > /sys/class/net/" + ifname + "/queues/" + queue + "/rps_flow_cnt")
+                if ("tx" in queue):
+                    os.system ("echo \"" + nic_cpus[nicname] + "\" > /sys/class/net/" + ifname + "/queues/" + queue + "/xps_cpus")
+
 
 def traversalDir_FirstDir(path):
     list = []
