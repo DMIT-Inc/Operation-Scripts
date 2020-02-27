@@ -1,5 +1,6 @@
 import subprocess
 import os
+import re
 
 def excu_optimization(nicname):
     os.system("ethtool -G " + nicname + " rx 4096 tx 4096")
@@ -9,7 +10,16 @@ def excu_optimization(nicname):
     os.system("setpci -v -d 8086:154d e6.b=2e")
     Out_CPUs = subprocess.Popen(["cat /sys/class/net/" + nicname + "/device/local_cpulist"],stdout=subprocess.PIPE, shell=True)
     cpus, cpu_error = Out_CPUs.communicate()
-    cpunumber = cpus.strip().count(',')
+    cpunumber = 0
+    if ("-" in cpus):
+        temp_cpu = re.split(r",", cpus)
+        for i_u in temp_cpu:
+            t_u = re.split(r"-", i_u)
+            if (len(t_u) != 2):
+                break
+            cpunumber += int(t_u[1]) - int(t_u[0]) + 1
+    else:
+        cpunumber = cpus.strip().count(',')
     os.system("ethtool -L " + nicname + " combined " + str(cpunumber))
 
     if (not os.path.exists("/etc/set_irq_affinity.sh")):
