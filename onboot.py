@@ -13,7 +13,7 @@ def excu_optimization(nicname):
     os.system("setpci -v -d 8086:154d e6.b=2e")
 
     #System default setting is good for most situation. Using multiple queue on same IRQ is ok. 
-'''
+    '''
     Out_CPUs = subprocess.Popen(["cat /sys/class/net/" + nicname + "/device/local_cpulist"],stdout=subprocess.PIPE, shell=True)
     cpus, cpu_error = Out_CPUs.communicate()
     cpunumber = 0
@@ -27,7 +27,7 @@ def excu_optimization(nicname):
     else:
         cpunumber = cpus.strip().count(',')
     os.system("ethtool -L " + nicname + " combined " + str(cpunumber))
-'''
+    '''
 
     # Set IRQ Affinity for every queue.
     if (not os.path.exists("/etc/set_irq_affinity.sh")):
@@ -44,8 +44,8 @@ def excu_optimization(nicname):
             # RSS enable, disable RPS
             #os.system("echo \"" + cpulists + "\" > /sys/class/net/" + nicname + "/queues/" + queue + "/rps_cpus")
             os.system("echo 2048 > /sys/class/net/" + nicname + "/queues/" + queue + "/rps_flow_cnt")
-        if ("tx" in queue):
-            # RSS enable, disable XPS
+        # RSS enable, disable XPS
+        #if ("tx" in queue):
             #os.system("echo \"" + cpulists + "\" > /sys/class/net/" + nicname + "/queues/" + queue + "/xps_cpus")
 
 def maindef():
