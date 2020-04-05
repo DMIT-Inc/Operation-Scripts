@@ -5,9 +5,15 @@ import re
 def excu_optimization(nicname):
     os.system("ethtool -G " + nicname + " rx 4096 tx 4096")
     os.system("ethtool -A " + nicname + " rx off tx off")
+    os.system("ethtool -K " + nicname + " ntuple off")
     os.system("ethtool -C " + nicname + " adaptive-rx off")
+    # Enable RSS Hash For UDP package
+    os.system("ethtool -N " + nicname + " rx-flow-hash udp4 sdfn")
     os.system("setpci -v -d 8086:10fb e6.b=2e")
     os.system("setpci -v -d 8086:154d e6.b=2e")
+
+    #System default setting is good for most situation. Using multiple queue on same IRQ is ok. 
+'''
     Out_CPUs = subprocess.Popen(["cat /sys/class/net/" + nicname + "/device/local_cpulist"],stdout=subprocess.PIPE, shell=True)
     cpus, cpu_error = Out_CPUs.communicate()
     cpunumber = 0
@@ -21,7 +27,9 @@ def excu_optimization(nicname):
     else:
         cpunumber = cpus.strip().count(',')
     os.system("ethtool -L " + nicname + " combined " + str(cpunumber))
+'''
 
+    # Set IRQ Affinity for every queue.
     if (not os.path.exists("/etc/set_irq_affinity.sh")):
         os.system("curl -o /etc/set_irq_affinity.sh https://raw.githubusercontent.com/DMIT-Inc/Operation-Scripts/master/set_irq_affinity.sh")
 
@@ -33,10 +41,12 @@ def excu_optimization(nicname):
     queueslist = traversalDir_FirstDir("/sys/class/net/" + nicname + "/queues/")
     for queue in queueslist:
         if ("rx" in queue):
-            os.system("echo \"" + cpulists + "\" > /sys/class/net/" + nicname + "/queues/" + queue + "/rps_cpus")
+            # RSS enable, disable RPS
+            #os.system("echo \"" + cpulists + "\" > /sys/class/net/" + nicname + "/queues/" + queue + "/rps_cpus")
             os.system("echo 2048 > /sys/class/net/" + nicname + "/queues/" + queue + "/rps_flow_cnt")
         if ("tx" in queue):
-            os.system("echo \"" + cpulists + "\" > /sys/class/net/" + nicname + "/queues/" + queue + "/xps_cpus")
+            # RSS enable, disable XPS
+            #os.system("echo \"" + cpulists + "\" > /sys/class/net/" + nicname + "/queues/" + queue + "/xps_cpus")
 
 def maindef():
     Output_NICList = subprocess.Popen(["find /sys/class/net ! -type d | xargs --max-args=1 realpath | awk -F\/ '/pci/{print $NF}'", ],stdout=subprocess.PIPE, shell=True)
