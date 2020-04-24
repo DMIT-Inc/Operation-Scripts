@@ -3,6 +3,7 @@ import os
 import re
 
 def excu_optimization(nicname):
+    os.system("echo 0 > /sys/kernel/mm/ksm/merge_across_nodes")
     os.system("ethtool -G " + nicname + " rx 4096 tx 4096")
     os.system("ethtool -A " + nicname + " rx off tx off")
     os.system("ethtool -K " + nicname + " ntuple off")
